@@ -1,0 +1,15 @@
+package com.example.moviesdatabase.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "movies")
+data class MovieEntity(
+    @PrimaryKey val id: Int,
+    val title: String,
+    val overview: String,
+    val posterPath: String?,
+    val voteAverage: Double,
+    val category: String,
+    val isBookmarked: Boolean = false
+)

@@ -9,7 +9,7 @@ import javax.inject.Inject
 class GetBookmarkedMoviesUseCase @Inject constructor(
     private val repository: MovieRepository
 ) {
-    operator fun invoke(): Flow<Resource<List<Movie>>> {
+    operator fun invoke(): Flow<List<Movie>> {
         return repository.getBookmarkedMovies()
     }
 }

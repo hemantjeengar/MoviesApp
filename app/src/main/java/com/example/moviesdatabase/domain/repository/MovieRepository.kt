@@ -9,5 +9,5 @@ interface MovieRepository {
     fun getNowPlayingMovies(): Flow<Resource<List<Movie>>>
     suspend fun searchMovies(query: String) : Resource<List<Movie>>
     suspend fun toggleBookmark(movie: Movie)
-    fun getBookmarkedMovies(): Flow<Resource<List<Movie>>>
+    fun getBookmarkedMovies(): Flow<List<Movie>>
 }
