@@ -8,12 +8,14 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.example.moviesdatabase.data.local.entity.BookmarkTuple
 import com.example.moviesdatabase.data.local.entity.MovieEntity
+import com.example.moviesdatabase.data.local.entity.NowPlayingEntity
+import com.example.moviesdatabase.data.local.entity.TrendingEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MovieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(movies: List<MovieEntity>)
+    suspend fun insertAllMovies(movies: List<MovieEntity>)
 
     @Query("SELECT id, isBookmarked FROM movies WHERE id in (:movieIds)")
     suspend fun getBulkBookmarkStatus(movieIds: List<Int>): List<BookmarkTuple>
@@ -34,11 +36,45 @@ interface MovieDao {
         }
 
         //insert all the movies
-        insertAll(mergedMovies)
+        insertAllMovies(mergedMovies)
     }
 
-    @Query("SELECT * FROM movies where category = :category")
-    fun getMoviesByCategory(category: String): Flow<List<MovieEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTrendingLinks(links: List<TrendingEntity>)
+
+    @Query("DELETE FROM trending_movies")
+    suspend fun clearTrending()
+
+    @Query("SELECT m.* FROM movies m INNER JOIN trending_movies t ON m.id = t.movieId ORDER BY t.rank ASC")
+    fun getTrendingMovies(): Flow<List<MovieEntity>>
+
+    @Transaction
+    suspend fun updateTrendingFeed(movies: List<MovieEntity>, links: List<TrendingEntity>) {
+        upsertMoviesSafely(movies)
+
+        clearTrending()
+        insertTrendingLinks(links)
+    }
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNowPlayingLinks(links: List<NowPlayingEntity>)
+
+    @Query("DELETE FROM now_playing_movies")
+    suspend fun clearNowPlaying()
+
+
+    @Query("SELECT m.* FROM movies m INNER JOIN now_playing_movies t ON m.id = t.movieId ORDER BY t.rank ASC")
+    fun getNowPlayingMovies(): Flow<List<MovieEntity>>
+
+    @Transaction
+    suspend fun updateNowPlayingFeed(movies: List<MovieEntity>, links: List<NowPlayingEntity>) {
+        upsertMoviesSafely(movies)
+
+        clearNowPlaying()
+        insertNowPlayingLinks(links)
+    }
+
 
     @Query("SELECT * FROM movies where isBookmarked = 1")
     fun getBookmarkedMovies(): Flow<List<MovieEntity>>

@@ -25,15 +25,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.moviesdatabase.presentation.util.ImageConstants
 import com.example.moviesdatabase.presentation.util.getPosterUrl
 
@@ -87,8 +92,19 @@ fun DetailScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
+                    var posterUrl by remember {
+                        mutableStateOf(currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_ORIGINAL))
+                    }
                     AsyncImage(
-                        model = currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_ORIGINAL),
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(posterUrl)
+                            .crossfade(true)
+                            .listener(
+                                onError = { _, _ ->
+                                    posterUrl = currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_W500)
+                                }
+                            )
+                            .build(),
                         contentDescription = currentMovie.title,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

@@ -1,12 +1,13 @@
 package com.example.moviesdatabase.data.repository
 
 import com.example.moviesdatabase.data.local.MovieDao
+import com.example.moviesdatabase.data.local.entity.NowPlayingEntity
+import com.example.moviesdatabase.data.local.entity.TrendingEntity
 import com.example.moviesdatabase.data.mappers.toDomain
 import com.example.moviesdatabase.data.mappers.toEntity
 import com.example.moviesdatabase.data.remote.TmdbApi
 import com.example.moviesdatabase.data.util.networkBoundResource
 import com.example.moviesdatabase.domain.model.Movie
-import com.example.moviesdatabase.domain.model.MovieCategory
 import com.example.moviesdatabase.domain.repository.MovieRepository
 import com.example.moviesdatabase.domain.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -22,14 +23,18 @@ class MovieRepositoryImpl @Inject constructor(
     override fun getTrendingMovies(): Flow<Resource<List<Movie>>> {
         return networkBoundResource(
             query = {
-                dao.getMoviesByCategory(MovieCategory.TRENDING.key).map { entities ->
+                dao.getTrendingMovies().map { entities ->
                     entities.map { it.toDomain() }
                 }
             },
             fetch = { api.getTrendingMovies() },
             saveFetchResult = { response ->
-                val entities = response.results.map { it.toEntity(MovieCategory.TRENDING.key) }
-                dao.upsertMoviesSafely(entities)
+                val movieEntities = response.results.map { it.toEntity() }
+                val links = response.results.mapIndexed { index, movieDto ->
+                    TrendingEntity(movieId = movieDto.id, rank = index)
+                }
+
+                dao.updateTrendingFeed(movieEntities, links)
             }
         )
     }
@@ -37,14 +42,18 @@ class MovieRepositoryImpl @Inject constructor(
     override fun getNowPlayingMovies(): Flow<Resource<List<Movie>>> {
         return networkBoundResource(
             query = {
-                dao.getMoviesByCategory(MovieCategory.NOW_PLAYING.key).map { entities ->
+                dao.getNowPlayingMovies().map { entities ->
                     entities.map { it.toDomain() }
                 }
             },
-            fetch = { api.getTrendingMovies() },
+            fetch = { api.getNowPlayingMovies() },
             saveFetchResult = { response ->
-                val entities = response.results.map { it.toEntity(MovieCategory.NOW_PLAYING.key) }
-                dao.upsertMoviesSafely(entities)
+                val movieEntities = response.results.map { it.toEntity() }
+                val links = response.results.mapIndexed { index, movieDto ->
+                    NowPlayingEntity(movieId = movieDto.id, rank = index)
+                }
+
+                dao.updateNowPlayingFeed(movieEntities, links)
             }
         )
     }
@@ -53,7 +62,7 @@ class MovieRepositoryImpl @Inject constructor(
         return try {
             //try online search first
             val response = api.searchMovies(query)
-            val entities = response.results.map { it.toEntity(MovieCategory.GENERAL.key) }
+            val entities = response.results.map { it.toEntity() }
 
             dao.upsertMoviesSafely(entities)
 

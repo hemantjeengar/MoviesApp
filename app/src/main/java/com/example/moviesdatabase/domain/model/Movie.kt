@@ -6,6 +6,5 @@ data class Movie(
     val overview: String,
     val posterPath: String?,
     val voteAverage: Double,
-    val category: String,
     val isBookmarked: Boolean = false
 )
