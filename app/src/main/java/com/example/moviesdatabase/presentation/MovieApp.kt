@@ -2,6 +2,7 @@ package com.example.moviesdatabase.presentation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -16,6 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.moviesdatabase.presentation.bookmarks.BookmarksScreen
+import com.example.moviesdatabase.presentation.detail.DetailScreen
 import com.example.moviesdatabase.presentation.home.HomeScreen
 import com.example.moviesdatabase.presentation.navigation.Screen
 import com.example.moviesdatabase.presentation.search.SearchScreen
@@ -47,6 +50,15 @@ fun MovieApp() {
                         navController.navigate(Screen.Search.route)
                     }
                 )
+
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Favorite, contentDescription = "Saved") },
+                    label = { Text("Saved") },
+                    selected = currentRoute == Screen.Bookmarks.route,
+                    onClick = {
+                        navController.navigate(Screen.Bookmarks.route)
+                    }
+                )
             }
         }
     ) { innerPadding ->
@@ -60,6 +72,12 @@ fun MovieApp() {
             }
             composable(Screen.Search.route) {
                 SearchScreen(navController)
+            }
+            composable(Screen.Bookmarks.route) {
+                BookmarksScreen(navController)
+            }
+            composable(Screen.Detail.route) {
+                DetailScreen(navController)
             }
         }
     }

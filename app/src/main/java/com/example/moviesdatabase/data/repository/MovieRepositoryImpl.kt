@@ -11,6 +11,7 @@ import com.example.moviesdatabase.domain.repository.MovieRepository
 import com.example.moviesdatabase.domain.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import javax.inject.Inject
 
 class MovieRepositoryImpl @Inject constructor(
@@ -28,7 +29,7 @@ class MovieRepositoryImpl @Inject constructor(
             fetch = { api.getTrendingMovies() },
             saveFetchResult = { response ->
                 val entities = response.results.map { it.toEntity(MovieCategory.TRENDING.key) }
-                dao.insertMovies(entities)
+                dao.upsertMoviesSafely(entities)
             }
         )
     }
@@ -43,18 +44,33 @@ class MovieRepositoryImpl @Inject constructor(
             fetch = { api.getTrendingMovies() },
             saveFetchResult = { response ->
                 val entities = response.results.map { it.toEntity(MovieCategory.NOW_PLAYING.key) }
-                dao.insertMovies(entities)
+                dao.upsertMoviesSafely(entities)
             }
         )
     }
 
     override suspend fun searchMovies(query: String): Resource<List<Movie>> {
         return try {
+            //try online search first
             val response = api.searchMovies(query)
-            val movies = response.results.map { it.toDomain() }
+            val entities = response.results.map { it.toEntity(MovieCategory.GENERAL.key) }
+
+            dao.upsertMoviesSafely(entities)
+
+            val movies = entities.map { it.toDomain() }
             Resource.Success(movies)
         } catch (e: Exception) {
-            Resource.Error("Could not search: ${e.message}")
+            if (e is IOException) {
+                //try offline search
+                val localMovies = dao.searchMoviesLocally(query)
+                if (localMovies.isNotEmpty()) {
+                    Resource.Success(localMovies.map { it.toDomain() })
+                } else {
+                    Resource.Error("No internet and no local results found.")
+                }
+            } else {
+                Resource.Error("Could not search: ${e.message}")
+            }
         }
     }
 
@@ -67,5 +83,10 @@ class MovieRepositoryImpl @Inject constructor(
         return dao.getBookmarkedMovies().map { entities ->
             entities.map { it.toDomain() }
         }
+    }
+
+    override fun getMovieDetails(movieId: Int): Flow<Movie?> {
+        return dao.getMovie(movieId).map { entity ->
+            entity?.toDomain() }
     }
 }
