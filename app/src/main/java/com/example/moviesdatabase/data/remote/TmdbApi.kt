@@ -1,8 +1,10 @@
 package com.example.moviesdatabase.data.remote
 
 
+import com.example.moviesdatabase.data.remote.dto.MovieDto
 import com.example.moviesdatabase.data.remote.dto.MoviesResponseDto
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TmdbApi {
@@ -15,4 +17,7 @@ interface TmdbApi {
 
     @GET("search/movie")
     suspend fun searchMovies(@Query("query") query: String): MoviesResponseDto
+
+    @GET("movie/{movie_id}")
+    suspend fun getMovie(@Path("movie_id") movieId: Int): MovieDto
 }

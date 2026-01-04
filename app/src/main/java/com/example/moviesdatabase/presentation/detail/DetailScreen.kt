@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -51,8 +52,10 @@ fun DetailScreen(
     navController: NavController,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
-    val movie by viewModel.movieState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    val movie = (uiState as? DetailUiState.Success)?.movie
 
     Scaffold(
         topBar = {
@@ -98,62 +101,83 @@ fun DetailScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (movie == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                val currentMovie = movie!!
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    var posterUrl by remember {
-                        mutableStateOf(currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_ORIGINAL))
-                    }
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(posterUrl)
-                            .crossfade(true)
-                            .listener(
-                                onError = { _, _ ->
-                                    posterUrl = currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_W500)
-                                }
-                            )
-                            .build(),
-                        contentDescription = currentMovie.title,
-                        contentScale = ContentScale.Crop,
+            when(val state = uiState) {
+                is DetailUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is DetailUiState.Error -> {
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(400.dp)
-                    )
-
-                    Column(modifier = Modifier.padding(16.dp)) {
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            text = currentMovie.title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                is DetailUiState.Success -> {
+                    val currentMovie = state.movie
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        var posterUrl by remember {
+                            mutableStateOf(currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_ORIGINAL))
+                        }
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(posterUrl)
+                                .crossfade(true)
+                                .listener(
+                                    onError = { _, _ ->
+                                        posterUrl = currentMovie.getPosterUrl(ImageConstants.IMAGE_SIZE_W500)
+                                    }
+                                )
+                                .build(),
+                            contentDescription = currentMovie.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(400.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = currentMovie.title,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold
+                            )
 
-                        Text(
-                            text = "Rating: ${currentMovie.voteAverage}/10",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Rating: ${currentMovie.voteAverage}/10",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
 
-                        Text(
-                            text = "Overview",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = currentMovie.overview,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Overview",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = currentMovie.overview,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
                     }
                 }
             }

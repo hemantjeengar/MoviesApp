@@ -94,8 +94,22 @@ class MovieRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getMovieDetails(movieId: Int): Flow<Movie?> {
-        return dao.getMovie(movieId).map { entity ->
-            entity?.toDomain() }
+    override fun getMovie(movieId: Int): Flow<Resource<Movie?>> {
+        return networkBoundResource(
+            query = {
+                dao.getMovie(movieId).map { entity ->
+                    entity?.toDomain() }
+            },
+            fetch = {
+                api.getMovie(movieId)
+            },
+            saveFetchResult = { movieDto ->
+                val movieEntity = movieDto.toEntity()
+                dao.upsertMoviesSafely(listOf(movieEntity))
+            },
+            shouldFetch = { localMovie ->
+                localMovie == null
+            }
+        )
     }
 }
