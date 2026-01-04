@@ -1,5 +1,7 @@
 package com.example.moviesdatabase.presentation.detail
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -49,6 +52,7 @@ fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val movie by viewModel.movieState.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -59,6 +63,17 @@ fun DetailScreen(
                         onClick = {navController.popBackStack()}
                     ) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    movie?.let { currentMovie ->
+                        IconButton(
+                            onClick = {
+                                shareMovie(context, currentMovie.title, currentMovie.id)
+                            }
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Share Movie")
+                        }
                     }
                 }
             )
@@ -144,4 +159,17 @@ fun DetailScreen(
             }
         }
     }
+}
+
+fun shareMovie(context: Context, title: String, movieId: Int) {
+    val deepLink = "https://www.moviedbapp.com/movie/$movieId"
+
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, "Check out this movie!")
+        putExtra(Intent.EXTRA_TEXT, "I found this amazing movie '$title' on MovieDB App!\n\nCheck it out here: $deepLink")
+    }
+
+    val shareIntent = Intent.createChooser(sendIntent, "Share Movie via")
+    context.startActivity(shareIntent, null)
 }

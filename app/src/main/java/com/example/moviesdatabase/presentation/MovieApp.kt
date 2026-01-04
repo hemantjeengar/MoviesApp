@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import com.example.moviesdatabase.presentation.bookmarks.BookmarksScreen
 import com.example.moviesdatabase.presentation.detail.DetailScreen
 import com.example.moviesdatabase.presentation.home.HomeScreen
@@ -76,7 +77,12 @@ fun MovieApp() {
             composable(Screen.Bookmarks.route) {
                 BookmarksScreen(navController)
             }
-            composable(Screen.Detail.route) {
+            composable(Screen.Detail.route,
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "https://www.moviedbapp.com/movie/{movieId}"
+                    }
+                )) {
                 DetailScreen(navController)
             }
         }
