@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,7 +40,10 @@ fun MovieApp() {
                     label = { Text("Home") },
                     selected = currentRoute == Screen.Home.route,
                     onClick = {
-                        navController.navigate(Screen.Home.route)
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
                     }
                 )
 
@@ -48,7 +52,10 @@ fun MovieApp() {
                     label = { Text("Search") },
                     selected = currentRoute == Screen.Search.route,
                     onClick = {
-                        navController.navigate(Screen.Search.route)
+                        navController.navigate(Screen.Search.route) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
                     }
                 )
 
@@ -57,7 +64,10 @@ fun MovieApp() {
                     label = { Text("Saved") },
                     selected = currentRoute == Screen.Bookmarks.route,
                     onClick = {
-                        navController.navigate(Screen.Bookmarks.route)
+                        navController.navigate(Screen.Bookmarks.route) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
